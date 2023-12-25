@@ -7,14 +7,27 @@ namespace Chess.Pieces {
     public abstract class Piece : MonoBehaviour {
 
         [SerializeField] private List<SideSprites> _images = new(2);
+        [SerializeField] private SpriteRenderer _image;
 
         protected internal PlayerSide ActiveSide;
         protected Board Board;
+        protected Vector2Int Position;
 
         private void Awake() {
             Board = FindObjectOfType<Board>();
         }
-        public abstract List<PieceMove> GetPositions(Vector2Int currentPosition);
+
+        public void Init(Vector2Int startPosition, PlayerSide side) {
+            ActiveSide = side;
+            Position = startPosition;
+        }
+
+        public void Start() {
+            _image.sprite = GetSprite();
+            _image.size = new Vector2(Board.CellSize, Board.CellSize);
+        }
+        
+        public abstract List<PieceMove> GetPositions();
 
         public Sprite GetSprite() => _images.First(image => image.Side == ActiveSide).Sprite;
 

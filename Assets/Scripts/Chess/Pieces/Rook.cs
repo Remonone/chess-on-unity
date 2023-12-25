@@ -6,7 +6,7 @@ namespace Chess.Pieces {
 
         private List<Vector2Int> _directions = new() { new Vector2Int(0, 1), new Vector2Int(1,0), new Vector2Int(-1,0), new Vector2Int(0, -1)};
 
-        public override List<PieceMove> GetPositions(Vector2Int currentPosition) {
+        public override List<PieceMove> GetPositions() {
             List<PieceMove> positions = new();
             for (int i = 0; i < 8; i++) {
                 bool[] isDirectionReachesEnd = new bool[_directions.Count];

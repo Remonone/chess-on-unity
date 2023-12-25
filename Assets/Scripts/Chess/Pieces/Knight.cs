@@ -15,14 +15,13 @@ namespace Chess.Pieces {
             new Vector2Int(1, -2)
         };
 
-        public override List<PieceMove> GetPositions(Vector2Int currentPosition) {
+        public override List<PieceMove> GetPositions() {
             List<PieceMove> positions = new();
             foreach (var direction in _directions) {
-                var position = currentPosition + direction;
+                var position = Position + direction;
                 if(IsPointOutOfBound(position)) continue;
                 if(Board[position].ActiveSide == ActiveSide) continue;
-                var newPosition = direction + currentPosition;
-                positions.Add(new PieceMove{ Position = newPosition, PieceUnderAttack = Board[newPosition]});
+                positions.Add(new PieceMove{ Position = position, PieceUnderAttack = Board[position]});
             }
             return positions;
         }
