@@ -5,20 +5,25 @@ using UnityEngine;
 namespace Chess.Pieces {
     public class Pawn : Piece {
 
-        public override List<PieceMove> GetPositions() {
+        public override List<PieceMove> GetMovePositions() {
             List<PieceMove> positions = new();
+            Vector2Int checkPosition;
             if (ActiveSide == PlayerSide.WHITE) {
-                if (!IsPointOutOfBound(new Vector2(Position.x + 1, Position.y + 1)) && Board[Position.x + 1, Position.y + 1] != null) {
-                    var position = new Vector2Int(Position.x + 1, Position.y + 1);
-                    positions.Add(new PieceMove {Position = position, PieceUnderAttack = Board[position]});
+                checkPosition = new Vector2Int(Position.x + 1, Position.y + 1);
+                if (!IsPointOutOfBound(checkPosition) 
+                    && !ReferenceEquals(Board[checkPosition], null)
+                    && Board[checkPosition].ActiveSide != ActiveSide) {
+                    positions.Add(new PieceMove {Position = checkPosition, PieceUnderAttack = Board[checkPosition]});
                 }
-                if(!IsPointOutOfBound(new Vector2(Position.x - 1, Position.y + 1)) && Board[Position.x - 1, Position.y + 1] != null) {
-                    var position = new Vector2Int(Position.x - 1, Position.y + 1);
-                    positions.Add(new PieceMove{Position = position, PieceUnderAttack = Board[position]});
+                checkPosition = new Vector2Int(Position.x - 1, Position.y + 1);
+                if(!IsPointOutOfBound(checkPosition) 
+                   && !ReferenceEquals(Board[checkPosition], null)
+                   && Board[checkPosition].ActiveSide != ActiveSide) {
+                    positions.Add(new PieceMove{Position = checkPosition, PieceUnderAttack = Board[checkPosition]});
                 }
-                if (Board[Position.x, Position.y + 1] != null) return positions;
+                if (!ReferenceEquals(Board[Position.x, Position.y + 1], null)) return positions;
                 positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y + 1) });
-                if (Position.y == 1 && Board[Position.x, Position.y + 2] == null) 
+                if (Position.y == 1 && ReferenceEquals(Board[Position.x, Position.y + 2], null)) 
                     positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y + 2) });
                 var previousStep = Board.GetPreviousStep();
                 if (Position.y != 5
@@ -29,23 +34,27 @@ namespace Chess.Pieces {
 
                 return positions;
             } else {
-                if (!IsPointOutOfBound(new Vector2(Position.x + 1, Position.y - 1)) && Board[Position.x + 1, Position.y - 1] != null) {
-                    var position = new Vector2Int(Position.x + 1, Position.y - 1);
-                    positions.Add(new PieceMove {Position = position, PieceUnderAttack = Board[position]});
+                checkPosition = new Vector2Int(Position.x + 1, Position.y - 1);
+                if (!IsPointOutOfBound(checkPosition) 
+                    && !ReferenceEquals(Board[checkPosition], null)
+                    && Board[checkPosition].ActiveSide != ActiveSide) {
+                    positions.Add(new PieceMove {Position = checkPosition, PieceUnderAttack = Board[checkPosition]});
                 }
-                if(!IsPointOutOfBound(new Vector2(Position.x - 1, Position.y - 1)) && Board[Position.x - 1, Position.y - 1] != null) {
-                    var position = new Vector2Int(Position.x - 1, Position.y - 1);
-                    positions.Add(new PieceMove{Position = position, PieceUnderAttack = Board[position]});
+                checkPosition = new Vector2Int(Position.x - 1, Position.y - 1);
+                if(!IsPointOutOfBound(checkPosition) 
+                   && !ReferenceEquals(Board[checkPosition], null)
+                   && Board[checkPosition].ActiveSide != ActiveSide) {
+                    positions.Add(new PieceMove{Position = checkPosition, PieceUnderAttack = Board[checkPosition]});
                 }
-                if (Board[Position.x, Position.y + 1] != null) return positions;
-                positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y + 1) });
-                if (Position.y == 1 && Board[Position.x, Position.y + 2] == null) 
-                    positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y + 2) });
+                if (!ReferenceEquals(Board[Position.x, Position.y - 1], null)) return positions;
+                positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y - 1) });
+                if (Position.y == 1 && ReferenceEquals(Board[Position.x, Position.y - 2], null)) 
+                    positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y - 2) });
                 var previousStep = Board.GetPreviousStep();
                 if (Position.y != 4
                     || (previousStep.NewPosition.y - previousStep.PreviousPosition.y) != 2
                     || Math.Abs(previousStep.NewPosition.x - Position.x) != 1) return positions;
-                var enPassant = new Vector2Int(previousStep.NewPosition.x, 5);
+                var enPassant = new Vector2Int(previousStep.NewPosition.x, 3);
                 positions.Add(new PieceMove{ Position = enPassant, PieceUnderAttack = previousStep.Piece });
 
                 return positions;

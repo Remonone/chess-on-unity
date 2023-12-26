@@ -19,24 +19,29 @@ namespace Chess {
         public PreviousStep GetPreviousStep() => _step;
 
         public Piece this[int x, int y] {
-            get { return _pieces[x, y]; }
-            set { _pieces[x, y] = value; }
+            get => _pieces[x, y];
+            set => _pieces[x, y] = value;
         }
 
         public Piece this[Vector2Int position] {
-            get { return _pieces[position.x, position.y]; }
-            set { _pieces[position.x, position.y] = value; }
+            get => _pieces[position.x, position.y];
+            set => _pieces[position.x, position.y] = value;
         }
 
         private void Start() {
             StartGame();
         }
 
-        public Vector2Int GetPositionByWorldPosition(Vector3 worldPosition) {
+        public Vector2Int GetBoardPositionByWorldPosition(Vector3 worldPosition) {
             var result = new Vector2Int((int)Math.Round((worldPosition.x - _startingPoint.x) / _cellSize - .5f), 
                 (int)Math.Round(worldPosition.y / _cellSize - _startingPoint.y / _cellSize - .5f));
-            print("Result Position: " + result + ". Calculus: " + ((worldPosition.x - _startingPoint.x) / _cellSize - .5f) + "; " + ((worldPosition.y - _startingPoint.y) / _cellSize - .5f));
             return result;
+        }
+
+        public Vector3 GetWorldPositionByBoardPosition(Vector2Int position) {
+            var worldPosition = new Vector3(_startingPoint.x + position.x * _cellSize + _cellSize / 2,
+                _startingPoint.y + position.y * _cellSize + _cellSize / 2);
+            return worldPosition;
         }
 
         public void StartGame() {
@@ -65,8 +70,7 @@ namespace Chess {
 
         private void SetPieceToMatrix(string pieceName, PlayerSide side, Vector2Int position) {
             var prefab = _bundle.GetPieceByName(pieceName);
-            var piecePosition = new Vector3(_startingPoint.x + position.x * _cellSize + _cellSize / 2,
-                _startingPoint.y + position.y * _cellSize + _cellSize / 2);
+            var piecePosition = GetWorldPositionByBoardPosition(position);
             var piece = Instantiate(prefab, piecePosition, Quaternion.identity, transform);
             piece.Init(position, side);
             this[position] = piece;
@@ -76,6 +80,13 @@ namespace Chess {
             public Piece Piece;
             public Vector2Int PreviousPosition;
             public Vector2Int NewPosition;
+        }
+
+        public void MovePieceToNewPosition(Piece piece, Vector2Int position) {
+            this[piece.GetPosition()] = null;
+            if(!ReferenceEquals(this[position], null)) Destroy(this[position].gameObject);
+            this[position] = piece;
+            piece.TranslatePosition(position);
         }
     }
 }

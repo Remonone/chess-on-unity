@@ -15,7 +15,7 @@ namespace Chess.Pieces {
             new Vector2Int(1, -2)
         };
 
-        public override List<PieceMove> GetPositions() {
+        public override List<PieceMove> GetMovePositions() {
             List<PieceMove> positions = new();
             foreach (var direction in _directions) {
                 var position = Position + direction;

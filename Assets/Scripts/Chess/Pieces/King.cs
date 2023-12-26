@@ -14,12 +14,12 @@ namespace Chess.Pieces {
             new Vector2Int(0, -1)
         };
 
-        public override List<PieceMove> GetPositions() {
+        public override List<PieceMove> GetMovePositions() {
             List<PieceMove> positions = new();
             foreach (var direction in _directions) {
                 var position = Position + direction;
                 if(IsPointOutOfBound(position)) continue;
-                if(Board[position.x, position.y].ActiveSide == ActiveSide) continue;
+                if(!ReferenceEquals(Board[position], null) && Board[position].ActiveSide == ActiveSide) continue;
                 // TODO: Check if point is under attack
                 positions.Add(new PieceMove { Position = position, PieceUnderAttack = Board[position]});
             }
