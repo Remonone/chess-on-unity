@@ -1,4 +1,5 @@
-﻿using Chess.Pieces;
+﻿using System;
+using Chess.Pieces;
 using Chess.Pieces.Data;
 using Unity.Netcode;
 using UnityEngine;
@@ -29,6 +30,13 @@ namespace Chess {
 
         private void Start() {
             StartGame();
+        }
+
+        public Vector2Int GetPositionByWorldPosition(Vector3 worldPosition) {
+            var result = new Vector2Int((int)Math.Round((worldPosition.x - _startingPoint.x) / _cellSize - .5f), 
+                (int)Math.Round(worldPosition.y / _cellSize - _startingPoint.y / _cellSize - .5f));
+            print("Result Position: " + result + ". Calculus: " + ((worldPosition.x - _startingPoint.x) / _cellSize - .5f) + "; " + ((worldPosition.y - _startingPoint.y) / _cellSize - .5f));
+            return result;
         }
 
         public void StartGame() {

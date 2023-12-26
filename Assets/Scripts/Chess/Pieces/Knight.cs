@@ -20,7 +20,7 @@ namespace Chess.Pieces {
             foreach (var direction in _directions) {
                 var position = Position + direction;
                 if(IsPointOutOfBound(position)) continue;
-                if(Board[position].ActiveSide == ActiveSide) continue;
+                if(!ReferenceEquals(Board[position], null) && Board[position].ActiveSide == ActiveSide) continue;
                 positions.Add(new PieceMove{ Position = position, PieceUnderAttack = Board[position]});
             }
             return positions;

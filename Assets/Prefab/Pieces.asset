@@ -12,4 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2fd048cd1974aeabc1442125c8e14de, type: 3}
   m_Name: Pieces
   m_EditorClassIdentifier: 
-  _configs: []
+  _configs:
+  - Name: King
+    Piece: {fileID: 2670038972120080538, guid: 5165877eb7ab10445a96895839530109, type: 3}
+  - Name: Queen
+    Piece: {fileID: 561484820279753418, guid: 92c9b210e0455fe43a521547dade4119, type: 3}
+  - Name: Rook
+    Piece: {fileID: 5770527458115938815, guid: 0c0bc3a9b8308764b833e7804bbaa2cf, type: 3}
+  - Name: Knight
+    Piece: {fileID: 1469809902666808040, guid: 458326c455e253a48adad638215e2275, type: 3}
+  - Name: Bishop
+    Piece: {fileID: 1597127702208045791, guid: 0bfc28486e5f6a94895a0c7b4b21ca55, type: 3}
+  - Name: Pawn
+    Piece: {fileID: 652304791705789417, guid: 11603882c9211da4298c106bf263af59, type: 3}

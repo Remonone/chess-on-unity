@@ -8,17 +8,17 @@ namespace Chess.Pieces {
         public override List<PieceMove> GetPositions() {
             List<PieceMove> positions = new();
             if (ActiveSide == PlayerSide.WHITE) {
-                if (Board[Position.x + 1, Position.y + 1] != null) {
+                if (!IsPointOutOfBound(new Vector2(Position.x + 1, Position.y + 1)) && Board[Position.x + 1, Position.y + 1] != null) {
                     var position = new Vector2Int(Position.x + 1, Position.y + 1);
                     positions.Add(new PieceMove {Position = position, PieceUnderAttack = Board[position]});
                 }
-                if(Board[Position.x - 1, Position.y + 1] != null) {
+                if(!IsPointOutOfBound(new Vector2(Position.x - 1, Position.y + 1)) && Board[Position.x - 1, Position.y + 1] != null) {
                     var position = new Vector2Int(Position.x - 1, Position.y + 1);
                     positions.Add(new PieceMove{Position = position, PieceUnderAttack = Board[position]});
                 }
                 if (Board[Position.x, Position.y + 1] != null) return positions;
                 positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y + 1) });
-                if (Position.y == 2 && Board[Position.x, Position.y + 2] == null) 
+                if (Position.y == 1 && Board[Position.x, Position.y + 2] == null) 
                     positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y + 2) });
                 var previousStep = Board.GetPreviousStep();
                 if (Position.y != 5
@@ -29,17 +29,17 @@ namespace Chess.Pieces {
 
                 return positions;
             } else {
-                if (Board[Position.x + 1, Position.y + 1] != null) {
-                    var position = new Vector2Int(Position.x + 1, Position.y + 1);
+                if (!IsPointOutOfBound(new Vector2(Position.x + 1, Position.y - 1)) && Board[Position.x + 1, Position.y - 1] != null) {
+                    var position = new Vector2Int(Position.x + 1, Position.y - 1);
                     positions.Add(new PieceMove {Position = position, PieceUnderAttack = Board[position]});
                 }
-                if(Board[Position.x - 1, Position.y + 1] != null) {
-                    var position = new Vector2Int(Position.x - 1, Position.y + 1);
+                if(!IsPointOutOfBound(new Vector2(Position.x - 1, Position.y - 1)) && Board[Position.x - 1, Position.y - 1] != null) {
+                    var position = new Vector2Int(Position.x - 1, Position.y - 1);
                     positions.Add(new PieceMove{Position = position, PieceUnderAttack = Board[position]});
                 }
                 if (Board[Position.x, Position.y + 1] != null) return positions;
                 positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y + 1) });
-                if (Position.y == 2 && Board[Position.x, Position.y + 2] == null) 
+                if (Position.y == 1 && Board[Position.x, Position.y + 2] == null) 
                     positions.Add(new PieceMove { Position = new Vector2Int(Position.x, Position.y + 2) });
                 var previousStep = Board.GetPreviousStep();
                 if (Position.y != 4

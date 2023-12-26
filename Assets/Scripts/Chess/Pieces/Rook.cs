@@ -8,18 +8,18 @@ namespace Chess.Pieces {
 
         public override List<PieceMove> GetPositions() {
             List<PieceMove> positions = new();
+            bool[] isDirectionReachesEnd = new bool[_directions.Count];
             for (int i = 0; i < 8; i++) {
-                bool[] isDirectionReachesEnd = new bool[_directions.Count];
                 for (int j = 0; j < _directions.Count; j++) {
                     if(isDirectionReachesEnd[j]) continue;
-                    Vector2Int newPosition = _directions[j] * i;
+                    Vector2Int newPosition = _directions[j] * i + Position;
                     if (IsPointOutOfBound(newPosition)) {
                         isDirectionReachesEnd[j] = true;
                         continue;
                     }
-                    if (Board[newPosition.x, newPosition.y] != null) {
+                    if (Board[newPosition] != null) {
                         isDirectionReachesEnd[j] = true;
-                        if(Board[newPosition.x, newPosition.y].ActiveSide == ActiveSide) continue;
+                        if(Board[newPosition].ActiveSide == ActiveSide) continue;
                     }
                     positions.Add(new PieceMove { Position = newPosition, PieceUnderAttack = Board[newPosition] });
                 }

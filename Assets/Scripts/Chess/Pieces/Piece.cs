@@ -24,7 +24,6 @@ namespace Chess.Pieces {
 
         public void Start() {
             _image.sprite = GetSprite();
-            _image.size = new Vector2(Board.CellSize, Board.CellSize);
         }
         
         public abstract List<PieceMove> GetPositions();
