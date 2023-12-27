@@ -17,11 +17,13 @@ namespace Chess.Pieces {
 
         public override List<PieceMove> GetMovePositions() {
             List<PieceMove> positions = new();
+            if (Board.IsKingChecked) return positions;
             foreach (var direction in _directions) {
                 var position = Position + direction;
                 if(IsPointOutOfBound(position)) continue;
-                if(!ReferenceEquals(Board[position], null) && Board[position].ActiveSide == ActiveSide) continue;
-                positions.Add(new PieceMove{ Position = position, PieceUnderAttack = Board[position]});
+                positions.Add(new PieceMove{ Position = position, 
+                    PieceUnderAttack = Board[position], 
+                    IsReachable = ReferenceEquals(Board[position], null) || Board[position].ActiveSide != ActiveSide});
             }
             return positions;
         }

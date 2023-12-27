@@ -41,6 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Tooltips
+    uniqueID: 4197665387
+    locked: 0
   - name: Piece
     uniqueID: 2680033885
     locked: 0

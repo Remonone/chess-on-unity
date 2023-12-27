@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Chess.Pieces;
 using Chess.Pieces.Data;
 using Unity.Netcode;
@@ -13,9 +15,20 @@ namespace Chess {
 
         private readonly Piece[,] _pieces = new Piece[8, 8];
 
+        private readonly Dictionary<PlayerSide, List<Vector2Int>> _occupationDictionary = new();
+
         private PreviousStep _step;
 
-        public float CellSize => _cellSize;
+        private bool _isKingChecked;
+
+        private Piece _threat;
+
+        //TODO: Hunting the threat;
+        public Piece Threat => _threat;
+        public bool IsKingChecked => _isKingChecked;
+
+        public bool IsCellOccupied(PlayerSide side, Vector2Int cell) => _occupationDictionary[side].Contains(cell);
+        
         public PreviousStep GetPreviousStep() => _step;
 
         public Piece this[int x, int y] {
@@ -26,6 +39,11 @@ namespace Chess {
         public Piece this[Vector2Int position] {
             get => _pieces[position.x, position.y];
             set => _pieces[position.x, position.y] = value;
+        }
+
+        private void Awake() {
+            _occupationDictionary[PlayerSide.BLACK] = new List<Vector2Int>();
+            _occupationDictionary[PlayerSide.WHITE] = new List<Vector2Int>();
         }
 
         private void Start() {
@@ -82,12 +100,45 @@ namespace Chess {
             public Vector2Int NewPosition;
         }
 
-        public void MovePieceToNewPosition(Piece piece, Vector2Int position) {
+        public void MovePieceToNewPosition(Piece piece, PieceMove move) {
             this[piece.GetPosition()] = null;
-            if(!ReferenceEquals(this[position], null)) Destroy(this[position].gameObject);
-            this[position] = piece;
-            piece.TranslatePosition(position);
+            if (!ReferenceEquals(move.PieceUnderAttack, null)) {
+                this[move.PieceUnderAttack.GetPosition()] = null;
+                Destroy(move.PieceUnderAttack.gameObject);
+            }
+            this[move.Position] = piece;
+            _step = new PreviousStep { Piece = piece, PreviousPosition = piece.GetPosition(), NewPosition = move.Position };
+            piece.TranslatePosition(move.Position);
+            UpdateOccupationList();
         }
+        
+        
+        private void UpdateOccupationList() {
+            var isKingUnderAttack = false;
+            for (int y = 0; y < 8; y++) {
+                for (int x = 0; x < 8; x++) {
+                    var piece = this[x, y];
+                    if(ReferenceEquals(piece, null)) continue;
+                    var pieceMoves = piece.GetMovePositions();
+                    var king = pieceMoves?
+                        .FirstOrDefault(move => move.PieceUnderAttack && 
+                                                move.PieceUnderAttack.GetType() == typeof(King) && 
+                                                piece.ActiveSide != move.PieceUnderAttack.ActiveSide
+                                                && move.IsReachable);
+                    if (king != null) {
+                        _threat = piece;
+                        isKingUnderAttack = true;
+                    }
+                    
+                    var filteredMoves = from move in pieceMoves
+                        where !_occupationDictionary[piece.ActiveSide].Contains(move.Position) && move.IsReachable
+                        select move.Position;
+                    foreach(var move in filteredMoves) _occupationDictionary[piece.ActiveSide].Add(move);
+                }
+            }
+            _isKingChecked = isKingUnderAttack;
+        }
+        
     }
 }
 

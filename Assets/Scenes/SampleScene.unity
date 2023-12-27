@@ -277,7 +277,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9743f32ebd0d423c9044b2d66aa8bcb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _cellSize: 1.3408
+  _cellSize: 1.35
   _startingPoint: {x: 0.95, y: 1.2253}
   _bundle: {fileID: 11400000, guid: 3c251c466bb598944b4530e04d23d556, type: 2}
 --- !u!212 &982721198
@@ -424,6 +424,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _board: {fileID: 982721197}
+  _prefabTooltip: {fileID: 7281726495913710773, guid: 9ede4dd42b773ec43abb653c4b6fee76, type: 3}
 --- !u!4 &1969252534
 Transform:
   m_ObjectHideFlags: 0

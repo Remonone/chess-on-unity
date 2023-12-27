@@ -12,18 +12,18 @@ namespace Chess.Pieces {
             // Make castle possibility
             for (int i = 1; i < 8; i++) {
                 for (int j = 0; j < _directions.Count; j++) {
-                    if(isDirectionReachesEnd[j]) continue;
                     Vector2Int newPosition = _directions[j] * i + Position;
                     if (IsPointOutOfBound(newPosition)) {
                         isDirectionReachesEnd[j] = true;
                         continue;
                     }
-                    if (!ReferenceEquals(Board[newPosition], null)) {
-                        print(Board[newPosition].name);
-                        isDirectionReachesEnd[j] = true;
-                        if(Board[newPosition].ActiveSide == ActiveSide) continue;
+                    if (ReferenceEquals(Board[newPosition], null)) {
+                        positions.Add(new PieceMove { Position = newPosition, IsReachable = !isDirectionReachesEnd[j] });
+                        continue;
                     }
-                    positions.Add(new PieceMove { Position = newPosition, PieceUnderAttack = Board[newPosition] });
+                    if(Board[newPosition].ActiveSide != ActiveSide)
+                        positions.Add(new PieceMove { Position = newPosition, PieceUnderAttack = Board[newPosition], IsReachable = !isDirectionReachesEnd[j]});
+                    isDirectionReachesEnd[j] = true;
                 }
             }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Chess.Utils;
 using UnityEngine;
 
 namespace Chess.Pieces {
@@ -20,8 +21,8 @@ namespace Chess.Pieces {
                 var position = Position + direction;
                 if(IsPointOutOfBound(position)) continue;
                 if(!ReferenceEquals(Board[position], null) && Board[position].ActiveSide == ActiveSide) continue;
-                // TODO: Check if point is under attack
-                positions.Add(new PieceMove { Position = position, PieceUnderAttack = Board[position]});
+                if(Board.IsCellOccupied(SideSwap.InvertSide(ActiveSide), position)) continue;
+                positions.Add(new PieceMove { Position = position, PieceUnderAttack = Board[position], IsReachable = true});
             }
             return positions;
         }

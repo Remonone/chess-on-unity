@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Chess.Pieces;
+using Chess.Utils;
 using UnityEngine;
 
 namespace Chess.Controller {
@@ -10,7 +12,7 @@ namespace Chess.Controller {
 
         private PlayerSide _playerSide = PlayerSide.WHITE;
 
-        private readonly List<GameObject> _selectionList = new();
+        private readonly Dictionary<GameObject, Piece> _selectionList = new();
 
         private Vector3 _position;
         private Piece _selectedPiece;
@@ -30,19 +32,20 @@ namespace Chess.Controller {
         private bool MovePiece() {
             if (ReferenceEquals(_selectedPiece, null)) return false;
             var position = Input.mousePosition;
-            var selectedPos = GetPositionBySelectingTooltip(position);
+            var selectedPos = GetPositionBySelectingTooltip(position, out var tooltip);
             if (selectedPos == (Vector2Int.one * -1)) return false;
-            _board.MovePieceToNewPosition(_selectedPiece, selectedPos);
+            _board.MovePieceToNewPosition(_selectedPiece, new PieceMove {Position = selectedPos, PieceUnderAttack = _selectionList[tooltip]});
             _selectedPiece = null;
+            _playerSide = SideSwap.InvertSide(_playerSide);
             return true;
         }
         
-        private Vector2Int GetPositionBySelectingTooltip(Vector3 position) {
+        private Vector2Int GetPositionBySelectingTooltip(Vector3 position, out GameObject tooltip) {
             _position = Camera.main.ScreenToWorldPoint(position);
             var boardPosition = _board.GetBoardPositionByWorldPosition(_position);
             var cellCenter = _board.GetWorldPositionByBoardPosition(boardPosition);
-            var tooltip = _selectionList.Find(t => (t.transform.position - cellCenter).magnitude < .1f);
-            if (ReferenceEquals(tooltip, null)) return Vector2Int.one * -1;
+            tooltip = _selectionList.Keys.ToList().Find(t => (t.transform.position - cellCenter).magnitude < .1f);
+            if (ReferenceEquals(tooltip, null) || tooltip.GetComponent<SpriteRenderer>().sprite.name == "selected") return Vector2Int.one * -1;
             return boardPosition;
         }
 
@@ -54,7 +57,7 @@ namespace Chess.Controller {
             var tooltipSelection = Instantiate(_prefabTooltip, _board.GetWorldPositionByBoardPosition(selectedPos),
                 Quaternion.identity);
             tooltipSelection.GetComponent<SpriteRenderer>().sprite = GetTooltip("selected");
-            _selectionList.Add(tooltipSelection);
+            _selectionList.Add(tooltipSelection, null);
 
             if (ReferenceEquals(piece, null)) return;
             if (piece.ActiveSide != _playerSide) return;
@@ -62,15 +65,16 @@ namespace Chess.Controller {
             var availablePositions = piece.GetMovePositions();
 
             foreach (var possiblePosition in availablePositions) {
-                var pos = _board.GetWorldPositionByBoardPosition(possiblePosition.Position);
-                CreateMoveTooltip(pos, possiblePosition);
+                CreateMoveTooltip(possiblePosition);
             }
         }
         
-        private void CreateMoveTooltip(Vector3 pos, PieceMove possiblePosition) {
+        private void CreateMoveTooltip(PieceMove possiblePosition) {
+            if (!possiblePosition.IsReachable) return;
+            var pos = _board.GetWorldPositionByBoardPosition(possiblePosition.Position);
             var dot = Instantiate(_prefabTooltip, pos, Quaternion.identity);
             dot.GetComponent<SpriteRenderer>().sprite = GetSpriteByPieceMove(possiblePosition);
-            _selectionList.Add(dot);
+            _selectionList.Add(dot, possiblePosition.PieceUnderAttack);
         }
         private Sprite GetSpriteByPieceMove(PieceMove possiblePosition) {
             if (!possiblePosition.PieceUnderAttack) return GetTooltip("dot");
@@ -96,7 +100,7 @@ namespace Chess.Controller {
 
         private void ClearSelection() {
             foreach (var selectItem in _selectionList) {
-                Destroy(selectItem);
+                Destroy(selectItem.Key);
             }
             _selectionList.Clear();
         }

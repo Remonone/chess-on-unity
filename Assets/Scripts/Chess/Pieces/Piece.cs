@@ -50,5 +50,6 @@ namespace Chess.Pieces {
     public sealed class PieceMove {
         public Vector2Int Position;
         public Piece PieceUnderAttack;
+        public bool IsReachable;
     }
 }
