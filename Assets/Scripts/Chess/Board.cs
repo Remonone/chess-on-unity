@@ -15,17 +15,18 @@ namespace Chess {
 
         private readonly Piece[,] _pieces = new Piece[8, 8];
 
+        private Piece[,] _simulatedList = new Piece[8, 8];
+
         private readonly Dictionary<PlayerSide, List<Vector2Int>> _occupationDictionary = new();
 
         private PreviousStep _step;
 
         private bool _isKingChecked;
 
-        private Piece _threat;
-
-        //TODO: Hunting the threat;
-        public Piece Threat => _threat;
         public bool IsKingChecked => _isKingChecked;
+        
+        public Piece[,] Simulation => _simulatedList;
+        public Piece[,] OriginalTable => _pieces;
 
         public bool IsCellOccupied(PlayerSide side, Vector2Int cell) => _occupationDictionary[side].Contains(cell);
         
@@ -109,36 +110,57 @@ namespace Chess {
             this[move.Position] = piece;
             _step = new PreviousStep { Piece = piece, PreviousPosition = piece.GetPosition(), NewPosition = move.Position };
             piece.TranslatePosition(move.Position);
-            UpdateOccupationList();
+            UpdateOccupationList(move);
         }
         
         
-        private void UpdateOccupationList() {
-            var isKingUnderAttack = false;
+        private void UpdateOccupationList(PieceMove updateMove) {
+            var occupationList = GetOccupationList(_pieces, true);
+            var king = occupationList
+                .Where(move => this[move] && 
+                          this[move].GetType() == typeof(King) && 
+                          this[move].ActiveSide != this[updateMove.Position].ActiveSide).ToList();
+            _isKingChecked = king.Count != 0;
+        }
+        
+        // TODO: Rework
+        private List<Vector2Int> GetOccupationList(Piece[,] pieceTable, bool canSimulate) {
+            List<Vector2Int> positions = new List<Vector2Int>();
             for (int y = 0; y < 8; y++) {
                 for (int x = 0; x < 8; x++) {
-                    var piece = this[x, y];
-                    if(ReferenceEquals(piece, null)) continue;
-                    var pieceMoves = piece.GetMovePositions();
-                    var king = pieceMoves?
-                        .FirstOrDefault(move => move.PieceUnderAttack && 
-                                                move.PieceUnderAttack.GetType() == typeof(King) && 
-                                                piece.ActiveSide != move.PieceUnderAttack.ActiveSide
-                                                && move.IsReachable);
-                    if (king != null) {
-                        _threat = piece;
-                        isKingUnderAttack = true;
-                    }
+                    var piece = pieceTable[x, y];
+                    if (ReferenceEquals(piece, null)) continue;
+                    var pieceMoves = piece.GetMovePositions(canSimulate);
                     
                     var filteredMoves = from move in pieceMoves
-                        where !_occupationDictionary[piece.ActiveSide].Contains(move.Position) && move.IsReachable
+                        where !positions.Contains(move.Position)
                         select move.Position;
-                    foreach(var move in filteredMoves) _occupationDictionary[piece.ActiveSide].Add(move);
+                    positions.AddRange(filteredMoves);
                 }
             }
-            _isKingChecked = isKingUnderAttack;
+            return positions;
         }
-        
+
+        public bool IsKingAttackedOnSimulate(Piece piece, PieceMove move) {
+            SimulateMove(piece, move);
+            var occupationList = GetOccupationList(_simulatedList, false);
+            var king = occupationList
+                .Where(cell => _simulatedList[cell.x, cell.y] && 
+                               _simulatedList[cell.x, cell.y].GetType() == typeof(King)).ToList();
+            print(king.Count);
+            return king.Count != 0;
+        }
+
+        private void SimulateMove(Piece piece, PieceMove move) {
+            var pieces = _pieces.Clone() as Piece[,];
+            var piecePosition = piece.GetPosition();
+            pieces![piecePosition.x, piecePosition.y] = null;
+            if (!ReferenceEquals(move.PieceUnderAttack, null)) {
+                this[move.PieceUnderAttack.GetPosition()] = null;
+            }
+            pieces[move.Position.x, move.Position.y] = piece;
+            _simulatedList = pieces;
+        }
     }
 }
 

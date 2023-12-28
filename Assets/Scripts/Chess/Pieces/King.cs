@@ -15,14 +15,15 @@ namespace Chess.Pieces {
             new Vector2Int(0, -1)
         };
 
-        public override List<PieceMove> GetMovePositions() {
+        public override List<PieceMove> GetMovePositions(bool canSimulate) {
+            var board = GetBoard(canSimulate);
             List<PieceMove> positions = new();
             foreach (var direction in _directions) {
                 var position = Position + direction;
                 if(IsPointOutOfBound(position)) continue;
-                if(!ReferenceEquals(Board[position], null) && Board[position].ActiveSide == ActiveSide) continue;
+                if(!ReferenceEquals(board[position.x, position.y], null) && board[position.x, position.y].ActiveSide == ActiveSide) continue;
                 if(Board.IsCellOccupied(SideSwap.InvertSide(ActiveSide), position)) continue;
-                positions.Add(new PieceMove { Position = position, PieceUnderAttack = Board[position], IsReachable = true});
+                positions.Add(new PieceMove { Position = position, PieceUnderAttack = board[position.x, position.y]});
             }
             return positions;
         }

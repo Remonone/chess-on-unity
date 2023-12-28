@@ -5,6 +5,8 @@ using Chess.Utils;
 using UnityEngine;
 
 namespace Chess.Controller {
+    
+    // TODO: TARGET - REDUCE COUPLING
     public class Player : MonoBehaviour {
 
         [SerializeField] private Board _board;
@@ -62,7 +64,7 @@ namespace Chess.Controller {
             if (ReferenceEquals(piece, null)) return;
             if (piece.ActiveSide != _playerSide) return;
             _selectedPiece = piece;
-            var availablePositions = piece.GetMovePositions();
+            var availablePositions = piece.GetMovePositions(true);
 
             foreach (var possiblePosition in availablePositions) {
                 CreateMoveTooltip(possiblePosition);
@@ -70,7 +72,6 @@ namespace Chess.Controller {
         }
         
         private void CreateMoveTooltip(PieceMove possiblePosition) {
-            if (!possiblePosition.IsReachable) return;
             var pos = _board.GetWorldPositionByBoardPosition(possiblePosition.Position);
             var dot = Instantiate(_prefabTooltip, pos, Quaternion.identity);
             dot.GetComponent<SpriteRenderer>().sprite = GetSpriteByPieceMove(possiblePosition);

@@ -28,7 +28,7 @@ namespace Chess.Pieces {
             _image.sprite = GetSprite();
         }
         
-        public abstract List<PieceMove> GetMovePositions();
+        public abstract List<PieceMove> GetMovePositions(bool canSimulate);
 
         public Sprite GetSprite() => _images.First(image => image.Side == ActiveSide).Sprite;
 
@@ -38,6 +38,10 @@ namespace Chess.Pieces {
         public void TranslatePosition(Vector2Int newPosition) {
             Position = newPosition;
             transform.Translate(Board.GetWorldPositionByBoardPosition(newPosition) - transform.position);
+        }
+
+        public Piece[,] GetBoard(bool isOriginal) {
+            return isOriginal ? Board.OriginalTable : Board.Simulation;
         }
     }
 
@@ -50,6 +54,5 @@ namespace Chess.Pieces {
     public sealed class PieceMove {
         public Vector2Int Position;
         public Piece PieceUnderAttack;
-        public bool IsReachable;
     }
 }
