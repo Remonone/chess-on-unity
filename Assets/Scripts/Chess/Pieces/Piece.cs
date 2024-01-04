@@ -43,6 +43,37 @@ namespace Chess.Pieces {
         public Piece[,] GetBoard(bool isOriginal) {
             return isOriginal ? Board.OriginalTable : Board.Simulation;
         }
+        
+        protected List<PieceMove> GetDirectedPositions(List<Vector2Int> directions, bool canSimulate) {
+            var board = GetBoard(canSimulate);
+            List<PieceMove> positions = new();
+            bool[] isDirectionReachesEnd = new bool[directions.Count];
+            for (int i = 1; i < 8; i++) {
+                for (int j = 0; j < directions.Count; j++) {
+                    if (isDirectionReachesEnd[j]) continue;
+                    Vector2Int newPosition = directions[j] * i + Position;
+                    if (IsPointOutOfBound(newPosition)) {
+                        isDirectionReachesEnd[j] = true;
+                        continue;
+                    }
+                    if (ReferenceEquals(board[newPosition.x, newPosition.y], null)) {
+                        var move = new PieceMove { Position = newPosition };
+                        if(canSimulate && Board.IsKingChecked && Board.IsKingAttackedOnSimulate(this, move)) continue;
+                        positions.Add(move);
+                        continue;
+                    }
+
+                    if (board[newPosition.x, newPosition.y].ActiveSide != ActiveSide) {
+                        var move = new PieceMove { Position = newPosition, PieceUnderAttack = board[newPosition.x, newPosition.y] };
+                        if(canSimulate && Board.IsKingChecked && Board.IsKingAttackedOnSimulate(this, move)) continue;
+                        positions.Add(move);
+                    }
+                    isDirectionReachesEnd[j] = true;
+                }
+            }
+
+            return positions;
+        }
     }
 
     [Serializable]

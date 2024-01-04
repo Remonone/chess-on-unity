@@ -4,25 +4,15 @@ using UnityEngine;
 
 namespace Chess.Pieces {
     public class King : Piece {
-        private List<Vector2Int> _directions = new() { 
-            new Vector2Int(1, 1), 
-            new Vector2Int(1,-1), 
-            new Vector2Int(-1,1), 
-            new Vector2Int(-1, -1),
-            new Vector2Int(0, 1), 
-            new Vector2Int(1,0), 
-            new Vector2Int(-1,0), 
-            new Vector2Int(0, -1)
-        };
 
         public override List<PieceMove> GetMovePositions(bool canSimulate) {
             var board = GetBoard(canSimulate);
             List<PieceMove> positions = new();
-            foreach (var direction in _directions) {
+            foreach (var direction in Directions.Complete) {
                 var position = Position + direction;
                 if(IsPointOutOfBound(position)) continue;
                 if(!ReferenceEquals(board[position.x, position.y], null) && board[position.x, position.y].ActiveSide == ActiveSide) continue;
-                if(Board.IsCellOccupied(SideSwap.InvertSide(ActiveSide), position)) continue;
+                if(Board.IsCellOccupied(ActiveSide, position)) continue;
                 positions.Add(new PieceMove { Position = position, PieceUnderAttack = board[position.x, position.y]});
             }
             return positions;

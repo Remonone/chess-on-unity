@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using Chess.Pieces;
 using Chess.Pieces.Data;
+using Chess.Utils;
 using Unity.Netcode;
 using UnityEngine;
 
 namespace Chess {
+    using OccupationTable = Dictionary<Piece, List<Vector2Int>>;
+    
     public class Board : NetworkBehaviour {
+        
 
         [SerializeField] private float _cellSize;
         [SerializeField] private Vector2 _startingPoint;
@@ -17,7 +21,7 @@ namespace Chess {
 
         private Piece[,] _simulatedList = new Piece[8, 8];
 
-        private readonly Dictionary<PlayerSide, List<Vector2Int>> _occupationDictionary = new();
+        private OccupationTable _occupation = new();
 
         private PreviousStep _step;
 
@@ -28,7 +32,7 @@ namespace Chess {
         public Piece[,] Simulation => _simulatedList;
         public Piece[,] OriginalTable => _pieces;
 
-        public bool IsCellOccupied(PlayerSide side, Vector2Int cell) => _occupationDictionary[side].Contains(cell);
+        public bool IsCellOccupied(PlayerSide side, Vector2Int cell) => _occupation.Any(pair => pair.Value.Contains(cell) && pair.Key.ActiveSide != side);
         
         public PreviousStep GetPreviousStep() => _step;
 
@@ -40,11 +44,6 @@ namespace Chess {
         public Piece this[Vector2Int position] {
             get => _pieces[position.x, position.y];
             set => _pieces[position.x, position.y] = value;
-        }
-
-        private void Awake() {
-            _occupationDictionary[PlayerSide.BLACK] = new List<Vector2Int>();
-            _occupationDictionary[PlayerSide.WHITE] = new List<Vector2Int>();
         }
 
         private void Start() {
@@ -110,22 +109,65 @@ namespace Chess {
             this[move.Position] = piece;
             _step = new PreviousStep { Piece = piece, PreviousPosition = piece.GetPosition(), NewPosition = move.Position };
             piece.TranslatePosition(move.Position);
-            UpdateOccupationList(move);
+            UpdateOccupation();
         }
         
         
-        private void UpdateOccupationList(PieceMove updateMove) {
-            var occupationList = GetOccupationList(_pieces, true);
-            var king = occupationList
-                .Where(move => this[move] && 
-                          this[move].GetType() == typeof(King) && 
-                          this[move].ActiveSide != this[updateMove.Position].ActiveSide).ToList();
-            _isKingChecked = king.Count != 0;
+        private void UpdateOccupation() {
+            var list = GetUpdatedOccupationList(_pieces, _step, true);
+            _isKingChecked = CheckIsKingUnderAttack(list);
+            _occupation = list;
+        }
+
+        private bool CheckIsKingUnderAttack(OccupationTable table) {
+            var isKingUnderAttack = false;
+            foreach (var piece in table) {
+                foreach (var move in piece.Value) {
+                    print(move + " " + this[move]);
+                    if (!ReferenceEquals(this[move], null) 
+                        && this[move].GetType() == typeof(King) 
+                        && this[move].ActiveSide != piece.Key.ActiveSide) {
+                        isKingUnderAttack = true;
+                    }
+                }
+            }
+            return isKingUnderAttack;
         }
         
         // TODO: Rework
-        private List<Vector2Int> GetOccupationList(Piece[,] pieceTable, bool canSimulate) {
-            List<Vector2Int> positions = new List<Vector2Int>();
+        
+        //IN PROGRESS
+        private OccupationTable GetUpdatedOccupationList(Piece[,] pieceTable, PreviousStep prev, bool canSimulate) {
+            if (_occupation.Keys.Count < 1) {
+                var occupationList = FillOccupationList(pieceTable, canSimulate);
+                return occupationList;
+            }
+
+            var pieces = new List<Piece>();
+            var occupation = _occupation.ToDictionary(entry => entry.Key, entry => entry.Value);
+            foreach (var direction in Directions.Complete) {
+                for (int i = 0; i < 8; i++) {
+                    var pos = direction * i + prev.PreviousPosition;
+                    if(pos.x is < 0 or > 7 || pos.y is < 0 or > 7 || !this[pos]) continue;
+                    var piece = this[pos];
+                    occupation[piece].Clear();
+                    pieces.Add(piece);
+                    break;
+                }
+            }
+
+            foreach (var piece in pieces) {
+                var positions = piece.GetMovePositions(canSimulate);
+                var moves = from move in positions
+                    select move.Position;
+                occupation[piece].AddRange(moves);
+            }
+
+            return occupation;
+        }
+        
+        private OccupationTable FillOccupationList(Piece[,] pieceTable, bool canSimulate) {
+            var occupations = new OccupationTable();
             for (int y = 0; y < 8; y++) {
                 for (int x = 0; x < 8; x++) {
                     var piece = pieceTable[x, y];
@@ -133,22 +175,19 @@ namespace Chess {
                     var pieceMoves = piece.GetMovePositions(canSimulate);
                     
                     var filteredMoves = from move in pieceMoves
-                        where !positions.Contains(move.Position)
                         select move.Position;
-                    positions.AddRange(filteredMoves);
+                    if (!occupations.ContainsKey(piece)) occupations[piece] = new List<Vector2Int>();
+                    occupations[piece].AddRange(filteredMoves);
                 }
             }
-            return positions;
+            return occupations;
         }
 
         public bool IsKingAttackedOnSimulate(Piece piece, PieceMove move) {
+            var prev = new PreviousStep { Piece = piece, PreviousPosition = piece.GetPosition(), NewPosition = move.Position };
             SimulateMove(piece, move);
-            var occupationList = GetOccupationList(_simulatedList, false);
-            var king = occupationList
-                .Where(cell => _simulatedList[cell.x, cell.y] && 
-                               _simulatedList[cell.x, cell.y].GetType() == typeof(King)).ToList();
-            print(king.Count);
-            return king.Count != 0;
+            var occupationList = GetUpdatedOccupationList(_simulatedList, prev, false);
+            return CheckIsKingUnderAttack(occupationList);
         }
 
         private void SimulateMove(Piece piece, PieceMove move) {
