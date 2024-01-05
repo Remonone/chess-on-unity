@@ -11,34 +11,38 @@ namespace Chess.Pieces {
             new PawnConfig { Side = PlayerSide.BLACK, StartPosition = 6, VerticalDirection = -1, EnPassantPosition = 3 }
         };
 
-        public override List<PieceMove> GetMovePositions(bool canSimulate) {
-            var board = GetBoard(canSimulate);
+        public override List<PieceMove> GetMovePositions(Table table, bool canSimulate) {
             List<PieceMove> positions = new();
-            var config = Configs.First(c => c.Side == ActiveSide);
+            var config = Configs.First(c => c.Side == Info.Side);
+            var position = Info.Position;
 
             for (int i = -1; i < 2; i += 2) {
-                var checkPosition = new Vector2Int(Position.x + i, Position.y + config.VerticalDirection);
-                if (!IsPointOutOfBound(checkPosition) && board[checkPosition.x, checkPosition.y] && board[checkPosition.x, checkPosition.y].ActiveSide != ActiveSide) {
-                    var pieceMove = new PieceMove {Position = checkPosition, PieceUnderAttack = board[checkPosition.x, checkPosition.y]};
-                    if (!(canSimulate && Board.IsKingChecked && Board.IsKingAttackedOnSimulate(this, pieceMove)))
+                var checkPosition = new Vector2Int(position.x + i, position.y + config.VerticalDirection);
+                if (!IsPointOutOfBound(checkPosition) && !ReferenceEquals(table[checkPosition.x, checkPosition.y], null) && table[checkPosition.x, checkPosition.y].Side != Info.Side) {
+                    var pieceMove = new PieceMove {Position = checkPosition, PieceUnderAttack = table[checkPosition.x, checkPosition.y].Reference};
+                    if (!(canSimulate && _info.Board.IsKingAttackedOnSimulate(this, pieceMove)))
                         positions.Add(pieceMove);
                 }
             }
 
-            var previousStep = Board.GetPreviousStep();
-            if (Position.y == config.EnPassantPosition && Math.Abs(previousStep.NewPosition.y - previousStep.PreviousPosition.y) == 2 && Math.Abs(previousStep.NewPosition.x - Position.x) == 1) {
-                var enPassant = new Vector2Int(previousStep.NewPosition.x, config.EnPassantPosition + config.VerticalDirection);
-                positions.Add(new PieceMove{ Position = enPassant, PieceUnderAttack = previousStep.Piece});
+            var previousStep = table.GetPreviousStep();
+            if (position.y == config.EnPassantPosition && Math.Abs(previousStep.NewPosition.y - previousStep.PreviousPosition.y) == 2 && Math.Abs(previousStep.NewPosition.x - position.x) == 1) {
+                var enPassant = new PieceMove {
+                    Position = new Vector2Int(previousStep.NewPosition.x, config.EnPassantPosition + config.VerticalDirection), 
+                    PieceUnderAttack = previousStep.Piece.Reference
+                };
+                if (!(canSimulate && Board.IsKingAttackedOnSimulate(this, enPassant)))
+                    positions.Add(enPassant);
             }
             
-            if (board[Position.x, Position.y + config.VerticalDirection]) return positions;
-            var move = new PieceMove { Position = new Vector2Int(Position.x, Position.y + config.VerticalDirection) };
-            if (!(canSimulate && Board.IsKingChecked && Board.IsKingAttackedOnSimulate(this, move))) 
+            if (table[position.x, position.y + config.VerticalDirection]?.Reference) return positions;
+            var move = new PieceMove { Position = new Vector2Int(position.x, position.y + config.VerticalDirection) };
+            if (!(canSimulate && _info.Board.IsKingAttackedOnSimulate(this, move))) 
                 positions.Add(move);
-            if (Position.y == config.StartPosition && ReferenceEquals(board[Position.x, Position.y + config.VerticalDirection * 2], null)) {
+            if (position.y == config.StartPosition && ReferenceEquals(table[position.x, position.y + config.VerticalDirection * 2], null)) {
                 move = new PieceMove
-                    { Position = new Vector2Int(Position.x, Position.y + config.VerticalDirection * 2) };
-                if(!(canSimulate && Board.IsKingChecked && Board.IsKingAttackedOnSimulate(this, move)))
+                    { Position = new Vector2Int(position.x, position.y + config.VerticalDirection * 2) };
+                if(!(canSimulate && Board.IsKingAttackedOnSimulate(this, move)))
                     positions.Add(move);
             }
                 

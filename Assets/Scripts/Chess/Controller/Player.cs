@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace Chess.Controller {
     
-    // TODO: TARGET - REDUCE COUPLING
     public class Player : MonoBehaviour {
 
         [SerializeField] private Board _board;
@@ -20,7 +19,11 @@ namespace Chess.Controller {
         private Piece _selectedPiece;
 
         private static Dictionary<string, Sprite> _tooltips;
+        private Camera _camera;
 
+        private void Start() {
+            _camera = Camera.main;
+        }
         public void Update() {
             if (Input.GetMouseButtonUp(0)) {
                 if (MovePiece()) {
@@ -43,7 +46,7 @@ namespace Chess.Controller {
         }
         
         private Vector2Int GetPositionBySelectingTooltip(Vector3 position, out GameObject tooltip) {
-            _position = Camera.main.ScreenToWorldPoint(position);
+            _position = _camera.ScreenToWorldPoint(position);
             var boardPosition = _board.GetBoardPositionByWorldPosition(_position);
             var cellCenter = _board.GetWorldPositionByBoardPosition(boardPosition);
             tooltip = _selectionList.Keys.ToList().Find(t => (t.transform.position - cellCenter).magnitude < .1f);
@@ -62,9 +65,9 @@ namespace Chess.Controller {
             _selectionList.Add(tooltipSelection, null);
 
             if (ReferenceEquals(piece, null)) return;
-            if (piece.ActiveSide != _playerSide) return;
+            if (piece.Side != _playerSide) return;
             _selectedPiece = piece;
-            var availablePositions = piece.GetMovePositions(true);
+            var availablePositions = _board.Table.Occupation[piece.Info]; // SAD :c
 
             foreach (var possiblePosition in availablePositions) {
                 CreateMoveTooltip(possiblePosition);
@@ -93,10 +96,10 @@ namespace Chess.Controller {
         }
 
         private Piece GetPieceByMousePosition(Vector3 mousePosition) {
-            _position = Camera.main.ScreenToWorldPoint(mousePosition);
+            _position = _camera.ScreenToWorldPoint(mousePosition);
             var piecePosition = _board.GetBoardPositionByWorldPosition(_position);
             if (piecePosition.x is < 0 or > 7 || piecePosition.y is < 0 or > 7 ) return null;
-            return _board[piecePosition];
+            return _board.Table[piecePosition]?.Reference; // SAD :c
         }
 
         private void ClearSelection() {
