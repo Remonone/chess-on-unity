@@ -3,6 +3,7 @@ using Chess.Pieces;
 using Chess.Pieces.Data;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Chess {
     
@@ -11,6 +12,10 @@ namespace Chess {
         [SerializeField] private float _cellSize;
         [SerializeField] private Vector2 _startingPoint;
         [SerializeField] private PieceBundle _bundle;
+
+        public UnityEvent OnStepEvent;
+        public UnityEvent OnCheckEvent;
+        public UnityEvent OnCaptureEvent;
 
         private Table _table;
         private Table _simulate;
@@ -71,20 +76,34 @@ namespace Chess {
             piece.Init(position, side);
             _table.SetPieceToTable(position, piece.Info);
         }
-
+        
+        // UpdateEvent: 0 - move; 1 - capture; 2 - check
         public void MovePieceToNewPosition(Piece piece, PieceMove move) {
-            
+            int updateEvent = 0;
             if (!ReferenceEquals(move.PieceUnderAttack, null)) {
                 var pieceToDestroy = move.PieceUnderAttack;
                 _table.DeletePiece(pieceToDestroy.Position);
                 Destroy(pieceToDestroy.gameObject);
+                updateEvent = 1;
             }
             _table.TransferPiece(piece.Position, move.Position);
             piece.TranslatePosition(move.Position);
             // TODO: OPTIMIZE COMPLEXITY
             _table.UpdateOccupationInfo(false);
             _table.UpdateOccupationInfo(true);
-            
+            if (_table.IsKingChecked) updateEvent = 2;
+            CastUpdateEvent(updateEvent);
+        }
+        
+        private void CastUpdateEvent(int updateEvent) {
+            switch (updateEvent) {
+                case 0: OnStepEvent?.Invoke();
+                    break;
+                case 1: OnCaptureEvent?.Invoke();
+                    break;
+                case 2: OnCheckEvent?.Invoke();
+                    break;
+            }
         }
 
         public bool IsKingAttackedOnSimulate(Piece piece, PieceMove move) {
